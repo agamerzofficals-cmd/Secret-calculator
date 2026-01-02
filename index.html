@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header h1 i {
+            font-size: 20px;
+        }
+        
+        .mode-indicator {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .screen {
+            display: none;
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* Setup Screen */
+        .setup-container {
+            text-align: center;
+        }
+        
+        .setup-container h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .setup-container p {
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .code-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        
+        .code-digit {
+            width: 50px;
+            height: 60px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            background: #f7fafc;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .code-digit:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* Calculator Screen */
+        .calculator {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .calculator-display {
+            background: #1a202c;
+            color: white;
+            padding: 20px;
+            text-align: right;
+            font-size: 36px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            border-radius: 10px 10px 0 0;
+            word-break: break-all;
+        }
+        
+        .calculator-history {
+            font-size: 16px;
+            opacity: 0.7;
+            min-height: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: #cbd5e0;
+        }
+        
+        .calc-btn {
+            border: none;
+            padding: 20px;
+            font-size: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .calc-btn:hover {
+            background: #f7fafc;
+        }
+        
+        .calc-btn:active {
+            background: #e2e8f0;
+        }
+        
+        .operator {
+            background: #f7fafc;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .equals {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .equals:hover {
+            background: #5a67d8;
+        }
+        
+        .zero {
+            grid-column: span 2;
+        }
+        
+        /* Vault Screen */
+        .vault-container {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+        
+        .vault-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .vault-title {
+            font-size: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .folder-list, .file-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        
+        .folder-item, .file-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .folder-item:hover, .file-item:hover {
+            background: #f7fafc;
+        }
+        
+        .folder-icon {
+            font-size: 24px;
+            color: #f6ad55;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            color: #4299e1;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+        
+        .folder-info, .file-info {
+            flex-grow: 1;
+        }
+        
+        .folder-name, .file-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .folder-details, .file-details {
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        .new-folder-btn, .upload-file-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        
+        .new-folder-btn:hover, .upload-file-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .back-btn {
+            background: none;
+            border: 1px solid #cbd5e0;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #4a5568;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover {
+            background: #f7fafc;
+        }
+        
+        /* Upload Modal */
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .upload-modal.active {
+            display: flex;
+        }
+        
+        .upload-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .upload-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+        }
+        
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #cbd5e0;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .selected-files {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            text-align: left;
+        }
+        
+        .selected-file {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            justify-content: space-between;
+        }
+        
+        .selected-file-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .selected-file-info i {
+            margin-right: 8px;
+            color: #667eea;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        /* Progress Bar */
+        .upload-progress {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .progress-container {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            background: #667eea;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        
+        /* Preview Modal */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .preview-modal.active {
+            display: flex;
+        }
+        
+        .preview-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 70vh;
+            display: block;
+        }
+        
+        .preview-video {
+            max-width: 100%;
+            max-height: 70vh;
+            display: block;
+        }
+        
+        .preview-info {
+            padding: 20px;
+            background: white;
+        }
+        
+        .preview-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #cbd5e0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* File Actions */
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .action-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #4a5568;
+            transition: background 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #cbd5e0;
+        }
+        
+        /* Storage Info */
+        .storage-info {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        .storage-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+        
+        .storage-used {
+            height: 100%;
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .storage-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .storage-warning {
+            background: #fefcbf;
+            border-left: 4px solid #d69e2e;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 4px 4px 0;
+            font-size: 12px;
+            color: #744210;
+        }
+        
+        @media (max-width: 480px) {
+            .app-container {
+                border-radius: 10px;
+            }
+            
+            .calc-btn {
+                padding: 15px;
+                font-size: 18px;
+            }
+            
+            .code-digit {
+                width: 40px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .upload-content {
+                padding: 20px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1><i class="fas fa-calculator"></i> Secret Calculator</h1>
+            <div class="mode-indicator" id="modeIndicator">Calculator Mode</div>
+        </div>
+        
+        <!-- Setup Screen -->
+        <div class="screen active" id="setupScreen">
+            <div class="setup-container">
+                <h2>Initial Setup</h2>
+                <p>Set your permanent custom numeric code. This code will act as the key to access your secret vault.</p>
+                <p><strong>Remember:</strong> Enter your code followed by '+' in calculator mode to access the vault.</p>
+                
+                <div class="code-input">
+                    <input type="password" maxlength="1" class="code-digit" id="digit1" autocomplete="off">
+                    <input type="password" maxlength="1" class="code-digit" id="digit2" autocomplete="off">
+                    <input type="password" maxlength="1" class="code-digit" id="digit3" autocomplete="off">
+                    <input type="password" maxlength="1" class="code-digit" id="digit4" autocomplete="off">
+                </div>
+                
+                <button class="new-folder-btn" id="setCodeBtn">
+                    <i class="fas fa-lock"></i> Set Code & Continue
+                </button>
+            </div>
+        </div>
+        
+        <!-- Calculator Screen -->
+        <div class="screen" id="calculatorScreen">
+            <div class="calculator">
+                <div class="calculator-display">
+                    <div class="calculator-history" id="calcHistory"></div>
+                    <div id="calcDisplay">0</div>
+                </div>
+                <div class="calculator-buttons">
+                    <button class="calc-btn" data-action="clear">C</button>
+                    <button class="calc-btn" data-action="backspace"><i class="fas fa-backspace"></i></button>
+                    <button class="calc-btn operator" data-action="divide">÷</button>
+                    <button class="calc-btn operator" data-action="multiply">×</button>
+                    
+                    <button class="calc-btn" data-number="7">7</button>
+                    <button class="calc-btn" data-number="8">8</button>
+                    <button class="calc-btn" data-number="9">9</button>
+                    <button class="calc-btn operator" data-action="subtract">-</button>
+                    
+                    <button class="calc-btn" data-number="4">4</button>
+                    <button class="calc-btn" data-number="5">5</button>
+                    <button class="calc-btn" data-number="6">6</button>
+                    <button class="calc-btn operator" data-action="add">+</button>
+                    
+                    <button class="calc-btn" data-number="1">1</button>
+                    <button class="calc-btn" data-number="2">2</button>
+                    <button class="calc-btn" data-number="3">3</button>
+                    <button class="calc-btn equals" data-action="equals" rowspan="2">=</button>
+                    
+                    <button class="calc-btn zero" data-number="0">0</button>
+                    <button class="calc-btn" data-action="decimal">.</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vault Screen -->
+        <div class="screen" id="vaultScreen">
+            <div class="vault-container">
+                <div class="vault-header">
+                    <div class="vault-title" id="vaultTitle">
+                        <i class="fas fa-folder"></i> Secret Vault
+                    </div>
+                    <button class="back-btn" id="backBtn">
+                        <i class="fas fa-calculator"></i> Back to Calculator
+                    </button>
+                </div>
+                
+                <!-- Folder View -->
+                <div class="folder-list" id="folderView">
+                    <div class="folder-list" id="folderList">
+                        <!-- Folders will be rendered here -->
+                    </div>
+                    
+                    <button class="new-folder-btn" id="newFolderBtn">
+                        <i class="fas fa-plus"></i> Create New Folder
+                    </button>
+                    
+                    <button class="upload-file-btn" id="uploadFileBtn" style="margin-top: 10px;">
+                        <i class="fas fa-upload"></i> Upload Photos/Videos
+                    </button>
+                    
+                    <!-- Storage Info -->
+                    <div class="storage-info">
+                        <div class="storage-stats">
+                            <span>Local Storage</span>
+                            <span id="storageUsed">0 GB / 50 GB</span>
+                        </div>
+                        <div class="storage-bar">
+                            <div class="storage-used" id="storageBar" style="width: 0%"></div>
+                        </div>
+                        <div id="storageDetails" style="font-size: 12px; color: #718096; margin-top: 5px;">
+                            <i class="fas fa-info-circle"></i> 50GB available for photos, videos, and files
+                        </div>
+                        <div class="storage-warning" id="storageWarning" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i> Browser storage limits may apply
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File View -->
+                <div class="file-list" id="fileView" style="display: none;">
+                    <div class="vault-header">
+                        <button class="back-btn" id="backToFoldersBtn">
+                            <i class="fas fa-arrow-left"></i> Back to Folders
+                        </button>
+                        <div class="vault-title" id="currentFolderName">
+                            <i class="fas fa-folder-open"></i> Folder Name
+                        </div>
+                    </div>
+                    
+                    <div class="file-list" id="fileList">
+                        <!-- Files will be rendered here -->
+                    </div>
+                    
+                    <button class="upload-file-btn" id="uploadToFolderBtn">
+                        <i class="fas fa-plus"></i> Add Files to this Folder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div class="upload-modal" id="uploadModal">
+        <div class="upload-content">
+            <div class="upload-header">
+                <h3 id="uploadTitle">Upload Files (50GB Storage)</h3>
+                <button class="upload-close" id="closeUploadBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h4>Click to Select Files</h4>
+                <p>or drag & drop photos/videos here</p>
+                <p style="font-size: 12px; color: #718096; margin-top: 10px;">
+                    Supports large files up to 2GB each<br>
+                    Total storage: 50GB
+                </p>
+                <input type="file" class="file-input" id="fileInput" multiple accept="image/*,video/*,.pdf,.txt,.docx,.zip,.rar">
+            </div>
+            
+            <div class="selected-files" id="selectedFiles"></div>
+            
+            <div class="upload-progress" id="uploadProgress">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="progressText" style="text-align: center; font-size: 14px; color: #718096;">Uploading...</div>
+                <div id="transferSpeed" style="text-align: center; font-size: 12px; color: #718096; margin-top: 5px;"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="new-folder-btn" style="flex: 1;" id="startUploadBtn" disabled>
+                    <i class="fas fa-upload"></i> Upload Selected Files
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <button class="preview-close" id="closePreviewBtn">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="previewMedia"></div>
+            <div class="preview-info" id="previewInfo">
+                <h3 id="previewFileName"></h3>
+                <p id="previewFileDetails"></p>
+                <div class="file-actions">
+                    <button class="action-btn" id="downloadFileBtn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="action-btn" id="deleteFileBtn">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let appState = {
+            isFirstLaunch: true,
+            customCode: "",
+            currentScreen: "setup",
+            currentFolderId: 1,
+            currentView: "folders",
+            selectedFiles: [],
+            calculator: {
+                display: "0",
+                history: "",
+                firstOperand: null,
+                operator: null,
+                waitingForSecondOperand: false,
+                secretCodeBuffer: ""
+            },
+            vault: {
+                folders: [
+                    { 
+                        id: 1, 
+                        name: "📸 Photos", 
+                        count: 0, 
+                        lastSync: "Never",
+                        created: new Date().toISOString().split('T')[0]
+                    },
+                    { 
+                        id: 2, 
+                        name: "🎥 Videos", 
+                        count: 0, 
+                        lastSync: "Never",
+                        created: new Date().toISOString().split('T')[0]
+                    },
+                    { 
+                        id: 3, 
+                        name: "📄 Documents", 
+                        count: 0, 
+                        lastSync: "Never",
+                        created: new Date().toISOString().split('T')[0]
+                    },
+                    { 
+                        id: 4, 
+                        name: "📦 Archives", 
+                        count: 0, 
+                        lastSync: "Never",
+                        created: new Date().toISOString().split('T')[0]
+                    },
+                    { 
+                        id: 5, 
+                        name: "💎 Personal", 
+                        count: 0, 
+                        lastSync: "Never",
+                        created: new Date().toISOString().split('T')[0]
+                    }
+                ],
+                files: {
+                    1: [], // Photos
+                    2: [], // Videos
+                    3: [], // Documents
+                    4: [], // Archives
+                    5: []  // Personal
+                }
+            }
+        };
+
+        // Storage Constants
+        const MAX_STORAGE_BYTES = 50 * 1024 * 1024 * 1024; // 50GB in bytes
+        const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 * 1024; // 2GB per file
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for large files
+
+        // DOM Elements
+        const setupScreen = document.getElementById('setupScreen');
+        const calculatorScreen = document.getElementById('calculatorScreen');
+        const vaultScreen = document.getElementById('vaultScreen');
+        const modeIndicator = document.getElementById('modeIndicator');
+        
+        // Setup Elements
+        const codeDigits = [
+            document.getElementById('digit1'),
+            document.getElementById('digit2'),
+            document.getElementById('digit3'),
+            document.getElementById('digit4')
+        ];
+        const setCodeBtn = document.getElementById('setCodeBtn');
+        
+        // Calculator Elements
+        const calcDisplay = document.getElementById('calcDisplay');
+        const calcHistory = document.getElementById('calcHistory');
+        const calcButtons = document.querySelectorAll('.calc-btn');
+        
+        // Vault Elements
+        const backBtn = document.getElementById('backBtn');
+        const backToFoldersBtn = document.getElementById('backToFoldersBtn');
+        const newFolderBtn = document.getElementById('newFolderBtn');
+        const folderList = document.getElementById('folderList');
+        const fileList = document.getElementById('fileList');
+        const vaultTitle = document.getElementById('vaultTitle');
+        const currentFolderName = document.getElementById('currentFolderName');
+        const folderView = document.getElementById('folderView');
+        const fileView = document.getElementById('fileView');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const uploadToFolderBtn = document.getElementById('uploadToFolderBtn');
+        const storageUsed = document.getElementById('storageUsed');
+        const storageBar = document.getElementById('storageBar');
+        const storageDetails = document.getElementById('storageDetails');
+        const storageWarning = document.getElementById('storageWarning');
+        
+        // Upload Modal Elements
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadTitle = document.getElementById('uploadTitle');
+        const closeUploadBtn = document.getElementById('closeUploadBtn');
+        const startUploadBtn = document.getElementById('startUploadBtn');
+        const selectedFiles = document.getElementById('selectedFiles');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const transferSpeed = document.getElementById('transferSpeed');
+        
+        // Preview Modal Elements
+        const previewModal = document.getElementById('previewModal');
+        const previewMedia = document.getElementById('previewMedia');
+        const previewFileName = document.getElementById('previewFileName');
+        const previewFileDetails = document.getElementById('previewFileDetails');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+        const downloadFileBtn = document.getElementById('downloadFileBtn');
+        const deleteFileBtn = document.getElementById('deleteFileBtn');
+
+        // Initialize App
+        function initApp() {
+            // Load saved data from localStorage
+            loadFromStorage();
+            
+            // Check if already has code
+            if (appState.customCode) {
+                appState.isFirstLaunch = false;
+                showScreen('calculator');
+            } else {
+                showScreen('setup');
+            }
+            
+            setupEventListeners();
+            updateModeIndicator();
+            renderFolders();
+            updateStorageInfo();
+            checkStorageAvailability();
+        }
+
+        // Check browser storage availability
+        function checkStorageAvailability() {
+            try {
+                // Test localStorage capacity
+                const testKey = 'storage_test';
+                const testData = 'x'.repeat(1024 * 1024); // 1MB test data
+                
+                for (let i = 0; i < 5; i++) {
+                    try {
+                        localStorage.setItem(testKey + i, testData);
+                    } catch (e) {
+                        storageWarning.style.display = 'block';
+                        storageWarning.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Browser storage limit reached. Actual storage may be less than 50GB.`;
+                        break;
+                    }
+                }
+                
+                // Clean up test data
+                for (let i = 0; i < 5; i++) {
+                    localStorage.removeItem(testKey + i);
+                }
+                
+            } catch (e) {
+                console.log('Storage test failed:', e);
+            }
+        }
+
+        // Storage functions with IndexedDB for large files
+        let db = null;
+
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('SecretCalculatorDB', 1);
+                
+                request.onerror = (event) => {
+                    console.error('IndexedDB error:', event.target.error);
+                    reject(event.target.error);
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log('IndexedDB initialized');
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    // Create object store for file metadata
+                    if (!db.objectStoreNames.contains('files')) {
+                        const filesStore = db.createObjectStore('files', { keyPath: 'id' });
+                        filesStore.createIndex('folderId', 'folderId', { unique: false });
+                        filesStore.createIndex('name', 'name', { unique: false });
+                    }
+                    
+                    // Create object store for file chunks
+                    if (!db.objectStoreNames.contains('chunks')) {
+                        const chunksStore = db.createObjectStore('chunks', { keyPath: ['fileId', 'chunkIndex'] });
+                        chunksStore.createIndex('fileId', 'fileId', { unique: false });
+                    }
+                };
+            });
+        }
+
+        function saveToStorage() {
+            try {
+                // Save metadata to localStorage
+                localStorage.setItem('secretCalculatorCode', appState.customCode);
+                localStorage.setItem('secretCalculatorVault', JSON.stringify({
+                    folders: appState.vault.folders,
+                    files: {} // Only store metadata, actual files in IndexedDB
+                }));
+            } catch (e) {
+                console.log('Storage error:', e);
+                showNotification('Storage limit reached. Some older files may be removed.');
+            }
+        }
+
+        async function loadFromStorage() {
+            try {
+                // Load code
+                const savedCode = localStorage.getItem('secretCalculatorCode');
+                if (savedCode) {
+                    appState.customCode = savedCode;
+                }
+                
+                // Load vault metadata
+                const savedVault = localStorage.getItem('secretCalculatorVault');
+                if (savedVault) {
+                    const vaultData = JSON.parse(savedVault);
+                    appState.vault.folders = vaultData.folders || appState.vault.folders;
+                    // Files are loaded from IndexedDB on demand
+                }
+                
+                // Initialize IndexedDB
+                await initDatabase();
+                
+                // Load files from IndexedDB
+                await loadFilesFromDatabase();
+                
+            } catch (e) {
+                console.log('Load error:', e);
+            }
+        }
+
+        async function loadFilesFromDatabase() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction(['files'], 'readonly');
+                const store = transaction.objectStore('files');
+                const request = store.getAll();
+                
+                request.onsuccess = (event) => {
+                    const files = event.target.result;
+                    
+                    // Organize files by folder
+                    files.forEach(file => {
+                        if (!appState.vault.files[file.folderId]) {
+                            appState.vault.files[file.folderId] = [];
+                        }
+                        appState.vault.files[file.folderId].push(file);
+                    });
+                    
+                    // Update folder counts
+                    appState.vault.folders.forEach(folder => {
+                        folder.count = appState.vault.files[folder.id]?.length || 0;
+                    });
+                    
+                    resolve();
+                };
+                
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        async function saveFileToDatabase(fileData) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction(['files'], 'readwrite');
+                const store = transaction.objectStore('files');
+                const request = store.put(fileData);
+                
+                request.onsuccess = () => {
+                    resolve();
+                };
+                
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        async function saveFileChunks(fileId, dataUrl) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                // Convert base64 to binary and split into chunks
+                const base64Data = dataUrl.split(',')[1];
+                const binaryData = atob(base64Data);
+                const totalChunks = Math.ceil(binaryData.length / CHUNK_SIZE);
+                
+                let chunksSaved = 0;
+                
+                for (let i = 0; i < totalChunks; i++) {
+                    const start = i * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, binaryData.length);
+                    const chunk = binaryData.substring(start, end);
+                    
+                    const transaction = db.transaction(['chunks'], 'readwrite');
+                    const store = transaction.objectStore('chunks');
+                    const chunkData = {
+                        fileId: fileId,
+                        chunkIndex: i,
+                        data: chunk,
+                        totalChunks: totalChunks
+                    };
+                    
+                    const request = store.put(chunkData);
+                    
+                    request.onsuccess = () => {
+                        chunksSaved++;
+                        if (chunksSaved === totalChunks) {
+                            resolve();
+                        }
+                    };
+                    
+                    request.onerror = (event) => {
+                        reject(event.target.error);
+                    };
+                }
+            });
+        }
+
+        async function getFileFromDatabase(fileId) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                // Get file metadata
+                const transaction = db.transaction(['files'], 'readonly');
+                const store = transaction.objectStore('files');
+                const request = store.get(fileId);
+                
+                request.onsuccess = async (event) => {
+                    const fileData = event.target.result;
+                    if (!fileData) {
+                        reject('File not found');
+                        return;
+                    }
+                    
+                    // Get file chunks
+                    const chunkTransaction = db.transaction(['chunks'], 'readonly');
+                    const chunkStore = chunkTransaction.objectStore('chunks');
+                    const index = chunkStore.index('fileId');
+                    const chunkRequest = index.getAll(fileId);
+                    
+                    chunkRequest.onsuccess = (chunkEvent) => {
+                        const chunks = chunkEvent.target.result;
+                        
+                        // Reconstruct file data
+                        chunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+                        let binaryData = '';
+                        chunks.forEach(chunk => {
+                            binaryData += chunk.data;
+                        });
+                        
+                        // Convert back to base64
+                        const base64Data = btoa(binaryData);
+                        fileData.data = `data:${fileData.type};base64,${base64Data}`;
+                        
+                        resolve(fileData);
+                    };
+                    
+                    chunkRequest.onerror = (chunkEvent) => {
+                        reject(chunkEvent.target.error);
+                    };
+                };
+                
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        async function deleteFileFromDatabase(fileId) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject('Database not initialized');
+                    return;
+                }
+                
+                const transaction = db.transaction(['files', 'chunks'], 'readwrite');
+                
+                // Delete file metadata
+                const filesStore = transaction.objectStore('files');
+                filesStore.delete(fileId);
+                
+                // Delete file chunks
+                const chunksStore = transaction.objectStore('chunks');
+                const index = chunksStore.index('fileId');
+                const request = index.openCursor(IDBKeyRange.only(fileId));
+                
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        chunksStore.delete(cursor.primaryKey);
+                        cursor.continue();
+                    }
+                };
+                
+                transaction.oncomplete = () => {
+                    resolve();
+                };
+                
+                transaction.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        function calculateStorageUsed() {
+            let totalSize = 0;
+            
+            // Calculate size of all files
+            Object.values(appState.vault.files).forEach(folderFiles => {
+                folderFiles.forEach(file => {
+                    totalSize += file.size || 0;
+                });
+            });
+            
+            return totalSize;
+        }
+
+        function updateStorageInfo() {
+            const usedBytes = calculateStorageUsed();
+            const usedGB = (usedBytes / (1024 * 1024 * 1024)).toFixed(2);
+            const maxGB = 50;
+            
+            const percentage = Math.min((usedGB / maxGB) * 100, 100);
+            
+            storageUsed.textContent = `${usedGB} GB / ${maxGB} GB`;
+            storageBar.style.width = `${percentage}%`;
+            
+            // Change color based on usage
+            if (percentage > 90) {
+                storageBar.style.background = '#e53e3e';
+                storageDetails.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Storage almost full (${usedGB}GB used)`;
+            } else if (percentage > 70) {
+                storageBar.style.background = '#f6ad55';
+                storageDetails.innerHTML = `<i class="fas fa-info-circle"></i> ${(maxGB - usedGB).toFixed(2)}GB available`;
+            } else {
+                storageBar.style.background = '#667eea';
+                storageDetails.innerHTML = `<i class="fas fa-info-circle"></i> ${(maxGB - usedGB).toFixed(2)}GB available`;
+            }
+        }
+
+        // Screen Management
+        function showScreen(screenName) {
+            // Hide all screens
+            setupScreen.classList.remove('active');
+            calculatorScreen.classList.remove('active');
+            vaultScreen.classList.remove('active');
+            
+            // Show selected screen
+            appState.currentScreen = screenName;
+            if (screenName === 'setup') {
+                setupScreen.classList.add('active');
+            } else if (screenName === 'calculator') {
+                calculatorScreen.classList.add('active');
+                resetCalculator();
+                showFolderView();
+            } else if (screenName === 'vault') {
+                vaultScreen.classList.add('active');
+            }
+            
+            updateModeIndicator();
+        }
+
+        function updateModeIndicator() {
+            if (appState.currentScreen === 'calculator') {
+                modeIndicator.textContent = 'Calculator Mode';
+                modeIndicator.style.color = '#68d391';
+            } else if (appState.currentScreen === 'vault') {
+                if (appState.currentView === 'folders') {
+                    modeIndicator.textContent = 'Vault Mode - Folders';
+                } else {
+                    modeIndicator.textContent = 'Vault Mode - Files';
+                }
+                modeIndicator.style.color = '#f6ad55';
+            } else {
+                modeIndicator.textContent = 'Setup Mode';
+                modeIndicator.style.color = '#fff';
+            }
+        }
+
+        // Setup Code Input
+        function setupCodeInputListeners() {
+            codeDigits.forEach((digit, index) => {
+                digit.addEventListener('input', (e) => {
+                    if (e.target.value && index < codeDigits.length - 1) {
+                        codeDigits[index + 1].focus();
+                    }
+                });
+                
+                digit.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        codeDigits[index - 1].focus();
+                    }
+                });
+            });
+        }
+
+        // Calculator Logic
+        function resetCalculator() {
+            appState.calculator.display = "0";
+            appState.calculator.history = "";
+            appState.calculator.firstOperand = null;
+            appState.calculator.operator = null;
+            appState.calculator.waitingForSecondOperand = false;
+            appState.calculator.secretCodeBuffer = "";
+            updateCalculatorDisplay();
+        }
+
+        function updateCalculatorDisplay() {
+            calcDisplay.textContent = appState.calculator.display;
+            calcHistory.textContent = appState.calculator.history;
+        }
+
+        function inputDigit(digit) {
+            const { display, waitingForSecondOperand } = appState.calculator;
+            
+            appState.calculator.secretCodeBuffer += digit;
+            if (appState.calculator.secretCodeBuffer.length > 4) {
+                appState.calculator.secretCodeBuffer = appState.calculator.secretCodeBuffer.slice(1);
+            }
+            
+            if (waitingForSecondOperand) {
+                appState.calculator.display = digit;
+                appState.calculator.waitingForSecondOperand = false;
+            } else {
+                appState.calculator.display = display === '0' ? digit : display + digit;
+            }
+            
+            updateCalculatorDisplay();
+        }
+
+        function inputDecimal() {
+            if (appState.calculator.waitingForSecondOperand) {
+                appState.calculator.display = '0.';
+                appState.calculator.waitingForSecondOperand = false;
+                return;
+            }
+            
+            if (!appState.calculator.display.includes('.')) {
+                appState.calculator.display += '.';
+            }
+            
+            updateCalculatorDisplay();
+        }
+
+        function handleOperator(nextOperator) {
+            const { firstOperand, display, operator } = appState.calculator;
+            const inputValue = parseFloat(display);
+            
+            // Secret code detection
+            if (nextOperator === '+' && appState.calculator.secretCodeBuffer === appState.customCode) {
+                showScreen('vault');
+                resetCalculator();
+                return;
+            }
+            
+            if (operator && appState.calculator.waitingForSecondOperand) {
+                appState.calculator.operator = nextOperator;
+                appState.calculator.history = `${firstOperand} ${nextOperator}`;
+                updateCalculatorDisplay();
+                return;
+            }
+            
+            if (firstOperand === null) {
+                appState.calculator.firstOperand = inputValue;
+            } else if (operator) {
+                const result = performCalculation();
+                appState.calculator.display = `${parseFloat(result.toFixed(7))}`;
+                appState.calculator.firstOperand = result;
+            }
+            
+            appState.calculator.waitingForSecondOperand = true;
+            appState.calculator.operator = nextOperator;
+            appState.calculator.history = `${appState.calculator.display} ${nextOperator}`;
+            updateCalculatorDisplay();
+        }
+
+        function performCalculation() {
+            const { firstOperand, display, operator } = appState.calculator;
+            const inputValue = parseFloat(display);
+            
+            if (operator === '+') return firstOperand + inputValue;
+            if (operator === '-') return firstOperand - inputValue;
+            if (operator === '×') return firstOperand * inputValue;
+            if (operator === '÷') return firstOperand / inputValue;
+            
+            return inputValue;
+        }
+
+        function calculate() {
+            const { firstOperand, display, operator } = appState.calculator;
+            
+            if (firstOperand !== null && operator) {
+                const result = performCalculation();
+                appState.calculator.display = `${parseFloat(result.toFixed(7))}`;
+                appState.calculator.history = `${firstOperand} ${operator} ${display} =`;
+                appState.calculator.firstOperand = null;
+                appState.calculator.operator = null;
+                appState.calculator.waitingForSecondOperand = false;
+                updateCalculatorDisplay();
+            }
+        }
+
+        function clearCalculator() {
+            resetCalculator();
+        }
+
+        function backspace() {
+            if (appState.calculator.display.length > 1) {
+                appState.calculator.display = appState.calculator.display.slice(0, -1);
+            } else {
+                appState.calculator.display = '0';
+            }
+            
+            if (appState.calculator.secretCodeBuffer.length > 0) {
+                appState.calculator.secretCodeBuffer = appState.calculator.secretCodeBuffer.slice(0, -1);
+            }
+            
+            updateCalculatorDisplay();
+        }
+
+        // Vault Functions
+        function showFolderView() {
+            appState.currentView = "folders";
+            appState.currentFolderId = 1;
+            folderView.style.display = "block";
+            fileView.style.display = "none";
+            vaultTitle.innerHTML = '<i class="fas fa-folder"></i> Secret Vault';
+            updateModeIndicator();
+        }
+
+        function showFileView(folderId) {
+            appState.currentView = "files";
+            appState.currentFolderId = folderId;
+            folderView.style.display = "none";
+            fileView.style.display = "block";
+            
+            const folder = appState.vault.folders.find(f => f.id === folderId);
+            if (folder) {
+                currentFolderName.innerHTML = `<i class="fas fa-folder-open"></i> ${folder.name}`;
+            }
+            
+            renderFiles(folderId);
+            updateModeIndicator();
+        }
+
+        function renderFolders() {
+            folderList.innerHTML = '';
+            
+            appState.vault.folders.forEach(folder => {
+                const folderElement = document.createElement('div');
+                folderElement.className = 'folder-item';
+                
+                // Get folder size
+                const folderFiles = appState.vault.files[folder.id] || [];
+                const folderSize = folderFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+                
+                folderElement.innerHTML = `
+                    <div class="folder-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="folder-info">
+                        <div class="folder-name">${folder.name}</div>
+                        <div class="folder-details">${folder.count} files • ${formatFileSize(folderSize)}</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
+                `;
+                
+                folderElement.addEventListener('click', () => {
+                    showFileView(folder.id);
+                });
+                
+                folderList.appendChild(folderElement);
+            });
+            
+            updateStorageInfo();
+        }
+
+        async function renderFiles(folderId) {
+            fileList.innerHTML = '';
+            
+            const files = appState.vault.files[folderId] || [];
+            
+            if (files.length === 0) {
+                fileList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file"></i>
+                        <h3>No Files Yet</h3>
+                        <p>Upload files to this folder to see them here</p>
+                        <button class="action-btn" style="margin-top: 15px; background: #667eea; color: white;" onclick="showUploadModal(${folderId})">
+                            <i class="fas fa-upload"></i> Upload Files Now
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            for (const file of files) {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-item';
+                
+                // Determine icon based on file type
+                let icon = 'fa-file';
+                let iconColor = '#4299e1';
+                
+                if (file.type.startsWith('image/')) {
+                    icon = 'fa-image';
+                    iconColor = '#38a169';
+                } else if (file.type.startsWith('video/')) {
+                    icon = 'fa-video';
+                    iconColor = '#e53e3e';
+                } else if (file.type === 'application/pdf') {
+                    icon = 'fa-file-pdf';
+                    iconColor = '#e53e3e';
+                } else if (file.type === 'text/plain') {
+                    icon = 'fa-file-alt';
+                    iconColor = '#d69e2e';
+                } else if (file.type.includes('zip') || file.type.includes('rar')) {
+                    icon = 'fa-file-archive';
+                    iconColor = '#805ad5';
+                }
+                
+                fileElement.innerHTML = `
+                    <div class="file-icon">
+                        <i class="fas ${icon}" style="color: ${iconColor};"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-details">
+                            ${formatFileSize(file.size)} • ${new Date(file.date).toLocaleDateString()}
+                        </div>
+                    </div>
+                `;
+                
+                fileElement.addEventListener('click', async () => {
+                    try {
+                        // Load full file data from IndexedDB
+                        const fullFileData = await getFileFromDatabase(file.id);
+                        previewFile(fullFileData, folderId);
+                    } catch (error) {
+                        console.error('Error loading file:', error);
+                        previewFile(file, folderId);
+                    }
+                });
+                
+                fileList.appendChild(fileElement);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            if (bytes < 1024) return bytes + ' Bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        function createNewFolder() {
+            const folderName = prompt('Enter folder name:');
+            if (folderName && folderName.trim() !== '') {
+                const newFolder = {
+                    id: appState.vault.folders.length > 0 ? 
+                        Math.max(...appState.vault.folders.map(f => f.id)) + 1 : 1,
+                    name: folderName.trim(),
+                    count: 0,
+                    lastSync: 'Just now',
+                    created: new Date().toISOString().split('T')[0]
+                };
+                
+                appState.vault.folders.push(newFolder);
+                appState.vault.files[newFolder.id] = [];
+                renderFolders();
+                
+                showNotification(`Folder "${folderName}" created successfully!`);
+            }
+        }
+
+        function showUploadModal(targetFolderId = null) {
+            appState.selectedFiles = [];
+            selectedFiles.innerHTML = '';
+            uploadProgress.style.display = 'none';
+            startUploadBtn.disabled = true;
+            startUploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Selected Files';
+            transferSpeed.textContent = '';
+            
+            if (targetFolderId) {
+                const folder = appState.vault.folders.find(f => f.id === targetFolderId);
+                uploadTitle.textContent = `Upload to "${folder.name}"`;
+                appState.currentFolderId = targetFolderId;
+            } else {
+                uploadTitle.textContent = 'Upload Files (50GB Storage)';
+            }
+            
+            uploadModal.classList.add('active');
+        }
+
+        function handleFileSelect(files) {
+            appState.selectedFiles = Array.from(files);
+            selectedFiles.innerHTML = '';
+            
+            if (appState.selectedFiles.length === 0) {
+                startUploadBtn.disabled = true;
+                return;
+            }
+            
+            // Check total size and individual file sizes
+            let totalSize = 0;
+            let hasLargeFile = false;
+            
+            appState.selectedFiles.forEach(file => {
+                totalSize += file.size;
+                
+                if (file.size > MAX_FILE_SIZE_BYTES) {
+                    hasLargeFile = true;
+                    showNotification(`File "${file.name}" exceeds 2GB limit`);
+                }
+            });
+            
+            const currentUsed = calculateStorageUsed();
+            if (currentUsed + totalSize > MAX_STORAGE_BYTES) {
+                const availableGB = (MAX_STORAGE_BYTES - currentUsed) / (1024 * 1024 * 1024);
+                showNotification(`Not enough space. Only ${availableGB.toFixed(2)}GB available`);
+                appState.selectedFiles = [];
+                selectedFiles.innerHTML = '';
+                startUploadBtn.disabled = true;
+                return;
+            }
+            
+            if (hasLargeFile) {
+                appState.selectedFiles = appState.selectedFiles.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
+            }
+            
+            // Display selected files
+            appState.selectedFiles.forEach((file, index) => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'selected-file';
+                fileElement.innerHTML = `
+                    <div class="selected-file-info">
+                        <i class="fas fa-file"></i>
+                        ${file.name}
+                    </div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                `;
+                selectedFiles.appendChild(fileElement);
+            });
+            
+            if (appState.selectedFiles.length === 0) {
+                startUploadBtn.disabled = true;
+                return;
+            }
+            
+            startUploadBtn.disabled = false;
+            startUploadBtn.innerHTML = `<i class="fas fa-upload"></i> Upload ${appState.selectedFiles.length} File${appState.selectedFiles.length > 1 ? 's' : ''} (${formatFileSize(totalSize)})`;
+        }
+
+        async function uploadSelectedFiles() {
+            const targetFolderId = appState.currentFolderId;
+            
+            if (!targetFolderId) {
+                showNotification('Please select a folder first');
+                return;
+            }
+            
+            if (appState.selectedFiles.length === 0) {
+                showNotification('No files selected');
+                return;
+            }
+            
+            startUploadBtn.disabled = true;
+            startUploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            uploadProgress.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Starting upload...';
+            transferSpeed.textContent = '';
+            
+            try {
+                let uploadedCount = 0;
+                let totalBytesUploaded = 0;
+                const startTime = Date.now();
+                
+                for (const file of appState.selectedFiles) {
+                    // Update progress
+                    const progress = ((uploadedCount / appState.selectedFiles.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `Uploading ${uploadedCount + 1} of ${appState.selectedFiles.length}: ${file.name}`;
+                    
+                    const fileStartTime = Date.now();
+                    await processFileUpload(file, targetFolderId);
+                    uploadedCount++;
+                    totalBytesUploaded += file.size;
+                    
+                    // Calculate transfer speed
+                    const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
+                    const speed = totalBytesUploaded / elapsedTime; // bytes per second
+                    transferSpeed.textContent = `Speed: ${formatFileSize(speed)}/s`;
+                    
+                    // Update progress after each file
+                    progressBar.style.width = `${(uploadedCount / appState.selectedFiles.length) * 100}%`;
+                }
+                
+                // Update folder count
+                const folder = appState.vault.folders.find(f => f.id === targetFolderId);
+                if (folder) {
+                    folder.count = appState.vault.files[targetFolderId].length;
+                    folder.lastSync = 'Just now';
+                }
+                
+                uploadModal.classList.remove('active');
+                renderFiles(targetFolderId);
+                renderFolders();
+                updateStorageInfo();
+                
+                showNotification(`${appState.selectedFiles.length} file${appState.selectedFiles.length > 1 ? 's' : ''} uploaded successfully!`);
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showNotification('Error uploading files');
+            }
+            
+            startUploadBtn.disabled = false;
+            startUploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Selected Files';
+            uploadProgress.style.display = 'none';
+            transferSpeed.textContent = '';
+        }
+
+        async function processFileUpload(file, folderId) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                const fileStartTime = Date.now();
+                
+                reader.onload = async function(e) {
+                    try {
+                        // Determine appropriate folder based on file type
+                        let targetFolderId = folderId;
+                        
+                        // Auto-categorize if uploading to root
+                        if (!targetFolderId || targetFolderId === 1) {
+                            if (file.type.startsWith('image/')) {
+                                targetFolderId = 1; // Photos
+                            } else if (file.type.startsWith('video/')) {
+                                targetFolderId = 2; // Videos
+                            } else if (file.type === 'application/pdf' || file.type === 'text/plain') {
+                                targetFolderId = 3; // Documents
+                            } else if (file.type.includes('zip') || file.type.includes('rar')) {
+                                targetFolderId = 4; // Archives
+                            } else {
+                                targetFolderId = 5; // Personal
+                            }
+                        }
+                        
+                        const fileId = Date.now() + Math.random();
+                        
+                        const fileData = {
+                            id: fileId,
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            date: new Date().toISOString(),
+                            folderId: targetFolderId,
+                            uploadTime: Date.now() - fileStartTime
+                        };
+                        
+                        // Save file metadata
+                        await saveFileToDatabase(fileData);
+                        
+                        // Save file data in chunks for large files
+                        await saveFileChunks(fileId, e.target.result);
+                        
+                        // Update app state
+                        if (!appState.vault.files[targetFolderId]) {
+                            appState.vault.files[targetFolderId] = [];
+                        }
+                        appState.vault.files[targetFolderId].push(fileData);
+                        
+                        // Save metadata to localStorage
+                        saveToStorage();
+                        
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    reject(new Error('File reading error'));
+                };
+                
+                reader.onprogress = function(event) {
+                    if (event.lengthComputable) {
+                        const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                        progressText.textContent = `Reading file: ${percentLoaded}%`;
+                    }
+                };
+                
+                // Read file as base64
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function previewFile(file, folderId) {
+            previewFileName.textContent = file.name;
+            previewFileDetails.textContent = `${file.type} • ${formatFileSize(file.size)} • ${new Date(file.date).toLocaleDateString()}`;
+            
+            // Clear previous media
+            previewMedia.innerHTML = '';
+            
+            // Set up action buttons
+            downloadFileBtn.onclick = () => {
+                downloadFile(file);
+                previewModal.classList.remove('active');
+            };
+            
+            deleteFileBtn.onclick = () => {
+                if (confirm(`Delete "${file.name}"?`)) {
+                    deleteFile(file.id, folderId);
+                    previewModal.classList.remove('active');
+                }
+            };
+            
+            // Show appropriate preview
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'preview-image';
+                img.src = file.data;
+                img.alt = file.name;
+                previewMedia.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.className = 'preview-video';
+                video.controls = true;
+                video.src = file.data;
+                previewMedia.appendChild(video);
+            } else {
+                previewMedia.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>${file.name}</h3>
+                        <p>Preview not available for this file type</p>
+                        <p style="margin-top: 10px;">Click "Download" to save this file</p>
+                    </div>
+                `;
+            }
+            
+            // Show modal
+            previewModal.classList.add('active');
+        }
+
+        function downloadFile(file) {
+            try {
+                // Create a temporary link
+                const link = document.createElement('a');
+                link.href = file.data;
+                link.download = file.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification(`Downloading "${file.name}"...`);
+            } catch (error) {
+                console.error('Download error:', error);
+                showNotification('Failed to download file');
+            }
+        }
+
+        async function deleteFile(fileId, folderId) {
+            try {
+                // Remove from IndexedDB
+                await deleteFileFromDatabase(fileId);
+                
+                // Remove from app state
+                if (appState.vault.files[folderId]) {
+                    appState.vault.files[folderId] = appState.vault.files[folderId].filter(f => f.id !== fileId);
+                    
+                    // Update folder count
+                    const folder = appState.vault.folders.find(f => f.id === folderId);
+                    if (folder) {
+                        folder.count = appState.vault.files[folderId].length;
+                        folder.lastSync = 'Just now';
+                    }
+                    
+                    // Update view
+                    if (appState.currentFolderId === folderId) {
+                        renderFiles(folderId);
+                    } else {
+                        renderFolders();
+                    }
+                    
+                    // Save metadata
+                    saveToStorage();
+                    updateStorageInfo();
+                    showNotification('File deleted successfully');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification('Failed to delete file');
+            }
+        }
+
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #38a169;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Setup code
+            setupCodeInputListeners();
+            
+            setCodeBtn.addEventListener('click', () => {
+                const code = codeDigits.map(d => d.value).join('');
+                if (code.length === 4 && /^\d+$/.test(code)) {
+                    appState.customCode = code;
+                    localStorage.setItem('secretCalculatorCode', code);
+                    showScreen('calculator');
+                    showNotification(`Code set! Enter "${code}+" to access vault`);
+                } else {
+                    alert('Please enter a valid 4-digit numeric code.');
+                }
+            });
+            
+            // Calculator buttons
+            calcButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    const number = button.getAttribute('data-number');
+                    
+                    if (number) {
+                        inputDigit(number);
+                    } else if (action === 'decimal') {
+                        inputDecimal();
+                    } else if (action === 'add' || action === 'subtract' || 
+                               action === 'multiply' || action === 'divide') {
+                        const operatorMap = {
+                            'add': '+',
+                            'subtract': '-',
+                            'multiply': '×',
+                            'divide': '÷'
+                        };
+                        handleOperator(operatorMap[action]);
+                    } else if (action === 'equals') {
+                        calculate();
+                    } else if (action === 'clear') {
+                        clearCalculator();
+                    } else if (action === 'backspace') {
+                        backspace();
+                    }
+                });
+            });
+            
+            // Vault navigation
+            backBtn.addEventListener('click', () => {
+                showScreen('calculator');
+            });
+            
+            backToFoldersBtn.addEventListener('click', showFolderView);
+            
+            // Folder and file operations
+            newFolderBtn.addEventListener('click', createNewFolder);
+            
+            uploadFileBtn.addEventListener('click', () => {
+                showUploadModal(appState.currentFolderId);
+            });
+            
+            uploadToFolderBtn.addEventListener('click', () => {
+                showUploadModal(appState.currentFolderId);
+            });
+            
+            // Upload modal
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                handleFileSelect(e.target.files);
+            });
+            
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileSelect(e.dataTransfer.files);
+            });
+            
+            closeUploadBtn.addEventListener('click', () => {
+                uploadModal.classList.remove('active');
+            });
+            
+            startUploadBtn.addEventListener('click', uploadSelectedFiles);
+            
+            // Preview modal
+            closePreviewBtn.addEventListener('click', () => {
+                previewModal.classList.remove('active');
+            });
+            
+            // Close preview when clicking outside
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    previewModal.classList.remove('active');
+                }
+            });
+            
+            // Keyboard support for calculator
+            document.addEventListener('keydown', (e) => {
+                if (appState.currentScreen !== 'calculator') return;
+                
+                if (e.key >= '0' && e.key <= '9') {
+                    inputDigit(e.key);
+                } else if (e.key === '.') {
+                    inputDecimal();
+                } else if (e.key === '+') {
+                    handleOperator('+');
+                } else if (e.key === '-') {
+                    handleOperator('-');
+                } else if (e.key === '*') {
+                    handleOperator('×');
+                } else if (e.key === '/') {
+                    e.preventDefault();
+                    handleOperator('÷');
+                } else if (e.key === 'Enter' || e.key === '=') {
+                    calculate();
+                } else if (e.key === 'Escape') {
+                    clearCalculator();
+                } else if (e.key === 'Backspace') {
+                    backspace();
+                }
+            });
+            
+            // Simulate app background reset
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && appState.currentScreen === 'vault') {
+                    setTimeout(() => {
+                        if (appState.currentScreen === 'vault') {
+                            showScreen('calculator');
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+        // Add CSS animations for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+            
+            .fa-spinner {
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
